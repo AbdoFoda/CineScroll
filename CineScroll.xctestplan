@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "C1NE00012E000000000010",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:CineScroll.xcodeproj",
+        "identifier" : "D0E61C0D2FB7FCEA009A7E37",
+        "name" : "CineScrollTests"
+      }
+    }
+  ],
+  "version" : 1
+}

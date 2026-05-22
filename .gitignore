@@ -1,0 +1,28 @@
+# Xcode / tooling
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+playground.xcworkspace
+
+# Optional local overrides — `Config/Secrets.xcconfig` is committed by default.
+# Uncomment the line below if you need machine-specific API URLs without committing them:
+# Config/Secrets.xcconfig
+
+.env
+*.pem
+
+# Cloudflare Worker
+worker/node_modules/
+worker/.wrangler/
+worker/.dev.vars
+
+# macOS
+.DS_Store
