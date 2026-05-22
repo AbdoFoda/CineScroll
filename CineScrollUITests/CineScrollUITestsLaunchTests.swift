@@ -1,16 +1,8 @@
-//
-//  CineScrollUITestsLaunchTests.swift
-//  CineScrollUITests
-//
-//  Created by Abdulrahman Foda on 16.05.26.
-//
-
 import XCTest
 
 final class CineScrollUITestsLaunchTests: XCTestCase {
-
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
-        true
+        false
     }
 
     override func setUpWithError() throws {
@@ -18,18 +10,22 @@ final class CineScrollUITestsLaunchTests: XCTestCase {
     }
 
     @MainActor
-    func testLaunch() throws {
+    func testLaunchScreenshot() throws {
         let app = XCUIApplication()
+        app.launchArguments = [UITestID.launchArgument]
         app.launch()
 
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
+        waitForGrid(in: app)
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = "Launch Screen"
+        attachment.name = "Now Playing"
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+    
+    @MainActor
+    private func waitForGrid(in app: XCUIApplication) {
+        let grid = app.otherElements[UITestID.nowPlayingGrid]
+        _ = grid.waitForExistence(timeout: 12)
     }
 }

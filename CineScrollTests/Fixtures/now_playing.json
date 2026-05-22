@@ -1,0 +1,25 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "id": 1,
+      "title": "Alpha",
+      "overview": "A",
+      "poster_path": "/a.jpg",
+      "backdrop_path": null,
+      "release_date": "2026-01-01",
+      "vote_average": 7.1
+    },
+    {
+      "id": 2,
+      "title": "Beta",
+      "overview": "B",
+      "poster_path": null,
+      "backdrop_path": null,
+      "release_date": "2026-01-02",
+      "vote_average": 6.2
+    }
+  ],
+  "total_pages": 3,
+  "total_results": 6
+}

@@ -1,0 +1,13 @@
+{
+  "id": 550,
+  "title": "Fight Club",
+  "overview": "A ticking-time-bomb insomniac...",
+  "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+  "backdrop_path": "/fCayJrkfRaCRCTh8GqN30f8oyQF.jpg",
+  "release_date": "1999-10-15",
+  "vote_average": 8.433,
+  "runtime": 139,
+  "genres": [
+    { "id": 18, "name": "Drama" }
+  ]
+}
