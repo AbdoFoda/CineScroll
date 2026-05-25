@@ -2,7 +2,12 @@
 
 Movie discovery for iOS (18+) powered by [The Movie Database (TMDB)](https://www.themoviedb.org/) API. Swift **5.10** (Xcode 16 toolchain), SwiftUI + MVVM + repository, async/await networking, and XCTest coverage.
 
-_Add a simulator screenshot at `docs/screenshot.png` and link it here if you want a visual in the README._
+
+Now Playing            |  Movie Details
+:-------------------------:|:-------------------------:
+![](https://github.com/user-attachments/assets/d972d860-020e-4ceb-ab14-4271e6f095f1)  |  ![](https://github.com/user-attachments/assets/7b8d6845-0166-4e36-bb46-0f4d2d3946ec)
+
+
 
 ## Setup
 
@@ -60,7 +65,7 @@ MVVM keeps SwiftUI views thin; a repository abstracts TMDB so view models stay t
 | **API key** | TMDB key lives only on the **Cloudflare Worker** (`worker/`, Wrangler secret / `.dev.vars`). iOS reads `CINESCROLL_API_BASE_URL` from Info.plist via `Secrets.xcconfig`. Missing URL → `NetworkError.missingAPIKey`. |
 | **Transport** | App → Worker (HTTPS in prod) → TMDB. Posters still load from `image.tmdb.org` (public CDN). MITM on the device no longer exposes your TMDB key in query strings. |
 | **MVVM vs TCA** | MVVM + repository for clarity, testability, and low ceremony; no global reducer graph. |
-| **iOS versions** | Deployment **iOS 17**. Navigation zoom uses `.navigationTransition(.zoom)` on `NavigationLink` when **iOS 18+**; earlier releases use standard push. |
+| **iOS versions** | Deployment **iOS 18**. Navigation zoom uses `.navigationTransition(.zoom)` on `NavigationLink` when **iOS 18+**; earlier releases use standard push. |
 | **Third-party** | App: none. Tests: [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) (SPM, unit-test target only). |
 | **Concurrency** | `SWIFT_STRICT_CONCURRENCY = complete`. Project-wide `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` was **removed** so `Codable` models stay usable from nonisolated repository code; view models remain `@MainActor`. |
 | **Debounced search** | `Task.sleep` + cancellation (no Combine for networking); delay is injectable for tests. |
