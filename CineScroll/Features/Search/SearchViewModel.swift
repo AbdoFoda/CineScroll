@@ -48,10 +48,6 @@ final class SearchViewModel {
         self.connectivity = connectivity
         connectivity.onReconnect = { [weak self] in self?.retryLastSearch() }
         connectivity.onOffline = { [weak self] in self?.handleOffline() }
-        Task { [weak self] in
-            guard let self else { return }
-            recentQueries = await recentStore.loadQueries()
-        }
     }
 
     func configureConnectivity(monitor: NetworkMonitor) {
@@ -155,14 +151,13 @@ final class SearchViewModel {
         }
     }
 
-    // MARK: - Private
-
     /// Re-runs the last attempted query. used after reconnection.
     func retryLastSearch() {
         guard !lastQuery.isEmpty else { return }
         runQueryNow(lastQuery)
     }
 
+    // MARK: - Private
     private func handleOffline() {
         if !results.isEmpty {
             fetchTask?.cancel()

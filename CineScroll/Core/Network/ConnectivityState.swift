@@ -59,6 +59,21 @@ final class ConnectivityState {
         isBackOnline = false
     }
 
+    /// Handles a transition to online. Internal so unit tests can drive it without a live monitor.
+    func handleReconnect() {
+        if connectivityError != nil {
+            connectivityError = nil
+            isBackOnline = true
+        }
+        onReconnect()
+    }
+
+    /// Handles a transition to offline. Internal so unit tests can drive it without a live monitor.
+    func handleNetworkOffline() {
+        isBackOnline = false
+        onOffline()
+    }
+
     // MARK: - Private
 
     /// Observes `NetworkMonitor.isConnected` via `withObservationTracking` in a loop.
@@ -86,20 +101,5 @@ final class ConnectivityState {
                 }
             }
         }
-    }
-
-    /// Handles a transition to online. Internal so unit tests can drive it without a live monitor.
-    func handleReconnect() {
-        if connectivityError != nil {
-            connectivityError = nil
-            isBackOnline = true
-        }
-        onReconnect()
-    }
-
-    /// Handles a transition to offline. Internal so unit tests can drive it without a live monitor.
-    func handleNetworkOffline() {
-        isBackOnline = false
-        onOffline()
     }
 }

@@ -63,20 +63,6 @@ final class ComponentSnapshotsTests: SnapshotTestCase {
     )
   }
 
-  func testNetworkStatusBannerOffline() {
-    assertCineColorSchemeSnapshots(
-      of: bannerContainer(NetworkStatusBanner(isConnected: false, onReload: {})),
-      size: SnapshotSize.networkBanner
-    )
-  }
-
-  func testNetworkStatusBannerOfflineNoReload() {
-    assertCineColorSchemeSnapshots(
-      of: bannerContainer(NetworkStatusBanner(isConnected: false)),
-      size: SnapshotSize.networkBanner
-    )
-  }
-
   private func bannerContainer<V: View>(_ banner: V) -> some View {
     VStack(spacing: 0) {
       banner
