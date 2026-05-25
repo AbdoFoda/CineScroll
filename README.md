@@ -1,100 +1,162 @@
-# CineScroll
+# CineScroll 🎬
 
-Movie discovery for iOS (18+) powered by [The Movie Database (TMDB)](https://www.themoviedb.org/) API. Swift **5.10** (Xcode 16 toolchain), SwiftUI + MVVM + repository, async/await networking, and XCTest coverage.
+A native iOS app for discovering what's playing in cinemas right now. Built with SwiftUI, powered by [TMDB](https://www.themoviedb.org/), and designed with offline-first resilience in mind.
 
+> **iOS 18+ · Swift 5.10 · Xcode 16 · Zero third-party app dependencies**
 
-Now Playing            |  Movie Details
-:-------------------------:|:-------------------------:
-![](https://github.com/user-attachments/assets/d972d860-020e-4ceb-ab14-4271e6f095f1)  |  ![](https://github.com/user-attachments/assets/7b8d6845-0166-4e36-bb46-0f4d2d3946ec)
+<br>
 
+| Now Playing | Movie Detail |
+|:-----------:|:------------:|
+| ![Now Playing screen](https://github.com/user-attachments/assets/d972d860-020e-4ceb-ab14-4271e6f095f1) | ![Movie Detail screen](https://github.com/user-attachments/assets/7b8d6845-0166-4e36-bb46-0f4d2d3946ec) |
 
+<br>
 
-## Setup
+## What is this?
 
-1. Open `CineScroll.xcodeproj` in Xcode 16+.
-2. API base URL is in `Config/Secrets.xcconfig` (committed). For a machine-specific URL, copy `Secrets.xcconfig.example` and optionally add `Config/Secrets.xcconfig` to `.gitignore` (see comment in `.gitignore`).
-3. Start the TMDB proxy (keeps the API key off the device):
-   ```bash
-   cd worker
-   npm install
-   cp .dev.vars.example .dev.vars   # set TMDB_API_KEY for local dev
-   npm run dev                      # http://127.0.0.1:8787
-   ```
-   See [worker/README.md](worker/README.md) for deploy and production secrets.
-4. Build & run on the iOS 17+ simulator or device.
+CineScroll is a movie discovery app I built to explore modern SwiftUI patterns in a realistic, production-like setting — not a tutorial app, not a toy. It has real pagination, real offline handling, real tests, and a real security story (your TMDB API key never leaves the server).
 
-The app never sends `api_key` to TMDB. Previews use `PreviewMovieRepository` and do not need the Worker.
+If you're learning iOS development, this might be a useful reference for:
 
-**Deep links:** `cineScroll://movie/{id}` (see `Support/CineScroll-Info.plist`; plist lives outside the synchronized `CineScroll/` folder to avoid duplicate `Info.plist` copy rules).
+- MVVM with `@Observable` and strict concurrency (`SWIFT_STRICT_CONCURRENCY = complete`)
+- Async/await networking with retry, exponential backoff, and rate-limit awareness
+- Offline-first UX with URLCache fallback and connectivity toasts
+- Snapshot testing with deterministic placeholders (light + dark)
+- Keeping API secrets off the device via a Cloudflare Worker proxy
 
-## Project layout
+---
+
+## Getting started
+
+You'll need **Xcode 16+** and **Node.js 18+** for the proxy worker.
+
+### 1. Clone and open
+
+```bash
+git clone https://github.com/your-username/CineScroll.git
+cd CineScroll
+open CineScroll.xcodeproj
+```
+
+### 2. Set up the TMDB proxy
+
+The app never sends your TMDB API key directly — requests go through a lightweight Cloudflare Worker that injects the key server-side. To run it locally:
+
+```bash
+cd worker
+npm install
+cp .dev.vars.example .dev.vars   # then open .dev.vars and paste your TMDB key
+npm run dev                      # starts at http://127.0.0.1:8787
+```
+
+You'll need a free TMDB API key from [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api).
+
+For deploying to production, see [`worker/README.md`](worker/README.md).
+
+### 3. Point the app at your worker
+
+The worker URL is set in `Config/Secrets.xcconfig`. The committed default points at the production worker — for local development, copy the example and override it:
+
+```bash
+cp Config/Secrets.xcconfig.example Config/Secrets.xcconfig
+# Edit CINESCROLL_API_BASE_URL to http://127.0.0.1:8787
+```
+
+### 4. Build and run
+
+Hit **⌘R** in Xcode. That's it — the iOS Simulator will launch with live TMDB data.
+
+> **Note:** SwiftUI Previews use `PreviewMovieRepository` (static fixture data) and don't need the worker running at all.
+
+---
+
+## Project structure
 
 ```
 CineScroll/
-├── App/           Entry, RootView, dependencies, environment
-├── Core/          Models, network, repository, deep links
-├── DesignSystem/  Spacing, radii, sizes, grid tokens
-├── Features/      List, detail, search screens + view models
-├── Preview/       Preview catalog, preview repository, snapshot shells
-├── Shared/        Reusable UI, accessibility helpers
-└── Testing/       UITest + snapshot runtime flags (still in app target)
+├── App/            App entry point, RootView, dependency wiring
+├── Core/           Models, networking, repository, deep links
+│   ├── Models/     Movie, MovieDetail, PagedResponse
+│   ├── Network/    HTTPClient, RetryPolicy, APIEndpoint, TMDBConfig
+│   ├── Repository/ MovieRepository protocol + implementation
+│   └── Storage/    Recent search persistence (UserDefaults-backed)
+├── DesignSystem/   Spacing, corner radii, grid, and size tokens
+├── Features/       One folder per screen
+│   ├── MovieList/  Now Playing grid + view model
+│   ├── MovieDetail/Full detail screen + view model
+│   └── Search/     Search + autocomplete + view model
+├── Shared/         Reusable components, modifiers, accessibility helpers
+├── Preview/        Preview catalog and fixture repository
+└── Testing/        UITest and snapshot runtime configuration
 ```
+
+---
 
 ## Architecture
 
-MVVM keeps SwiftUI views thin; a repository abstracts TMDB so view models stay testable with mocks. This is intentionally smaller than TCA/Redux: fewer moving parts, straightforward data flow, and native `Observation`/`@Observable` fit the app’s scope without introducing a global store or DSL.
+MVVM with a repository layer. Views are kept deliberately thin — all business logic lives in `@MainActor`-isolated view models that talk to a `MovieRepository` protocol. Swapping the real implementation for a mock (in tests or previews) requires zero changes to any view.
 
 ```
-┌──────────────┐    async/await    ┌─────────────────────┐
-│   SwiftUI    │ ───────────────► │  @MainActor VM       │
-│   Views      │                  │  (list/detail/search)│
-└──────┬───────┘                  └──────────┬──────────┘
-       │                                   │
-       │ Environment (`AppDependencies`)   │ calls
-       ▼                                   ▼
-┌──────────────────────────────────────────────────────┐
-│ `MovieRepository` (protocol)                          │
-│   └── `MovieRepositoryImpl` → `HTTPClient` (protocol)│
-└──────────────────────────────────────────────────────┘
+┌──────────────┐    async/await    ┌──────────────────────┐
+│  SwiftUI     │ ───────────────► │  @MainActor ViewModel │
+│  Views       │                  │  (list/detail/search) │
+└──────┬───────┘                  └───────────┬───────────┘
+       │                                      │
+       │  Environment (AppDependencies)        │ calls
+       ▼                                      ▼
+┌─────────────────────────────────────────────────────────┐
+│  MovieRepository (protocol)                              │
+│    └── MovieRepositoryImpl → HTTPClient (protocol)       │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## Assumptions (documented)
+I went with MVVM + repository rather than TCA/Redux because the scope doesn't call for a global store. Fewer moving parts, easier to follow the data flow, and `@Observable` fits naturally without pulling in a DSL.
+
+### A few notable details
 
 | Topic | Decision |
-|--------|----------|
-| **API key** | TMDB key lives only on the **Cloudflare Worker** (`worker/`, Wrangler secret / `.dev.vars`). iOS reads `CINESCROLL_API_BASE_URL` from Info.plist via `Secrets.xcconfig`. Missing URL → `NetworkError.missingAPIKey`. |
-| **Transport** | App → Worker (HTTPS in prod) → TMDB. Posters still load from `image.tmdb.org` (public CDN). MITM on the device no longer exposes your TMDB key in query strings. |
-| **MVVM vs TCA** | MVVM + repository for clarity, testability, and low ceremony; no global reducer graph. |
-| **iOS versions** | Deployment **iOS 18**. Navigation zoom uses `.navigationTransition(.zoom)` on `NavigationLink` when **iOS 18+**; earlier releases use standard push. |
-| **Third-party** | App: none. Tests: [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) (SPM, unit-test target only). |
-| **Concurrency** | `SWIFT_STRICT_CONCURRENCY = complete`. Project-wide `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` was **removed** so `Codable` models stay usable from nonisolated repository code; view models remain `@MainActor`. |
-| **Debounced search** | `Task.sleep` + cancellation (no Combine for networking); delay is injectable for tests. |
+|-------|----------|
+| **API key security** | The TMDB key lives only on the Cloudflare Worker. The iOS app reads a proxy base URL from `Info.plist` — the key itself never touches the device. |
+| **Concurrency** | `SWIFT_STRICT_CONCURRENCY = complete`. Global `MainActor` isolation was deliberately *not* set project-wide so that `Codable` models stay usable from nonisolated repository code. |
+| **Retry logic** | Exponential backoff with jitter, 3 attempts by default. `NetworkError.rateLimited` respects the server's `Retry-After` header. Offline errors skip retries entirely and fall through to the URLCache. |
+| **Search debounce** | `Task.sleep` + cooperative cancellation — no Combine. The delay is injectable so tests can run instantly without artificial waits. |
+| **Offline UX** | Three-tier image fallback (in-process `NSCache` → `URLSession` network → stale `URLCache`). API responses also fall back to stale URLCache when offline. Connectivity changes surface as non-blocking bottom toasts. |
+| **Deep links** | `cineScroll://movie/{id}` — wired up in `RootView` via `onOpenURL`. |
 
-## Tests
+---
+
+## Running the tests
 
 ```bash
-xcodebuild -scheme CineScroll -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build-for-testing
-xcodebuild -scheme CineScroll -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test-without-building -only-testing:CineScrollTests
-```
+# Build once, then run unit tests
+xcodebuild -scheme CineScroll \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  build-for-testing
 
-Fixtures live under `CineScrollTests/Fixtures/`.
+xcodebuild -scheme CineScroll \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  test-without-building -only-testing:CineScrollTests
+```
 
 ### Snapshot tests
 
-Uses [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) with deterministic image placeholders (`SNAPSHOT_TESTING=1` via `SnapshotTestCase`). Reference PNGs live under `CineScrollTests/Snapshots/__Snapshots__/` (light + dark per case).
+Snapshot tests use [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) with deterministic grey placeholders instead of real images, so golden files are stable across machines and CI runs. Reference PNGs live in `CineScrollTests/Snapshots/__Snapshots__/` and cover both light and dark appearances.
 
-**Coverage (22 cases):** components (`MovieCard`, placeholder, suggestion row, error states, loading-more), features (detail content/loading/error, grids, loading placeholders, now playing screen), search (empty, loading, no results, results, recents), screens (detail + search shells with navigation).
+**22 cases across:** individual components, full feature screens in all states (loading, error, empty, populated), and navigation shells.
 
 ```bash
-# Verify snapshots
-xcodebuild -scheme CineScroll -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test-without-building \
+# Verify existing snapshots
+xcodebuild -scheme CineScroll \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  test-without-building \
   -only-testing:CineScrollTests/ComponentSnapshotsTests \
   -only-testing:CineScrollTests/FeatureSnapshotsTests \
   -only-testing:CineScrollTests/SearchSnapshotsTests \
   -only-testing:CineScrollTests/ScreenSnapshotsTests
 
-# Record / refresh golden images after intentional UI changes
-SNAPSHOT_RECORD=1 xcodebuild -scheme CineScroll -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test \
+# Re-record golden images after an intentional UI change
+SNAPSHOT_RECORD=1 xcodebuild -scheme CineScroll \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test \
   -only-testing:CineScrollTests/ComponentSnapshotsTests \
   -only-testing:CineScrollTests/FeatureSnapshotsTests \
   -only-testing:CineScrollTests/SearchSnapshotsTests \
@@ -103,8 +165,33 @@ SNAPSHOT_RECORD=1 xcodebuild -scheme CineScroll -destination 'platform=iOS Simul
 
 ### UI tests
 
-Launch with `-ui-testing` (preview repository, no network). Run `CineScrollUITests` from Xcode or:
+UI tests launch the app with `-ui-testing`, which swaps in `PreviewMovieRepository` (no network, instant search) and disables animations for reliable automation.
 
 ```bash
-xcodebuild -scheme CineScroll -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test -only-testing:CineScrollUITests
+xcodebuild -scheme CineScroll \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  test -only-testing:CineScrollUITests
 ```
+
+---
+
+## Contributing
+
+Contributions are welcome — whether it's a bug fix, a docs improvement, or a new feature idea. A few ground rules:
+
+- **Open an issue first** for anything bigger than a typo or small bug fix, so we can align before you put in the work.
+- **Keep PRs focused.** One logical change per PR makes review much faster.
+- **Tests are required** for changes to networking, view model logic, or storage. Snapshot tests should be re-recorded if you intentionally change UI.
+- **No new app-target dependencies.** The zero-dependency constraint is intentional — if you think a library is genuinely necessary, make the case in an issue first.
+
+If you're unsure whether something is in scope, just open an issue and ask.
+
+---
+
+## License
+
+MIT — see [`LICENSE`](LICENSE) for the full text.
+
+---
+
+*This product uses the TMDB API but is not endorsed or certified by TMDB.*
