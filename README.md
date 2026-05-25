@@ -1,6 +1,6 @@
 # CineScroll
 
-Movie discovery for iOS (17+) powered by [The Movie Database (TMDB)](https://www.themoviedb.org/) API. Swift **5.10** (Xcode 16 toolchain), SwiftUI + MVVM + repository, async/await networking, and XCTest coverage.
+Movie discovery for iOS (18+) powered by [The Movie Database (TMDB)](https://www.themoviedb.org/) API. Swift **5.10** (Xcode 16 toolchain), SwiftUI + MVVM + repository, async/await networking, and XCTest coverage.
 
 _Add a simulator screenshot at `docs/screenshot.png` and link it here if you want a visual in the README._
 
