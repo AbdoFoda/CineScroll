@@ -28,8 +28,6 @@ final class SearchViewModel {
     private var debounceTask: Task<Void, Never>?
     private var fetchTask: Task<Void, Never>?
     private var loadRecentsTask: Task<Void, Never>?
-    /// Skips one debounced empty query after `runQueryNow` (avoids canceling chip/submit searches).
-    private var skipNextEmptyDebounce = false
 
     // Search pagination
     private var searchCurrentPage: Int = 0
@@ -130,7 +128,6 @@ final class SearchViewModel {
     /// - Parameter saveToRecents: When true, persists the query after a completed search.
     func runQueryNow(_ text: String, saveToRecents: Bool = true) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        skipNextEmptyDebounce = !trimmed.isEmpty
         debounceTask?.cancel()
         debounceTask = nil
         fetchTask?.cancel()
@@ -190,10 +187,6 @@ final class SearchViewModel {
     private func handleDebouncedQuery(_ text: String) async {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            if skipNextEmptyDebounce {
-                skipNextEmptyDebounce = false
-                return
-            }
             fetchTask?.cancel()
             fetchTask = nil
             results = []
@@ -203,7 +196,6 @@ final class SearchViewModel {
             displayState = .idleEmptyQuery
             return
         }
-        skipNextEmptyDebounce = false
 
         fetchTask?.cancel()
         fetchTask = Task { [weak self] in

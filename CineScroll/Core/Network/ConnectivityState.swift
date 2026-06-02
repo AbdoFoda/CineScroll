@@ -4,9 +4,6 @@ import Foundation
 
 /// Per-screen connectivity toast state. Each ViewModel owns one instance.
 ///
-/// Assign `onReconnect` for a silent background refresh when coming back online,
-/// and `onOffline` to react immediately when the device loses connectivity.
-/// Wire live observation lazily via `configure(networkMonitor:)` from the View's `.task`.
 @MainActor
 @Observable
 final class ConnectivityState {
