@@ -12,23 +12,14 @@ import Foundation
 final class UserDefaultsRecentSearchStore: RecentSearchStoring, @unchecked Sendable {
     private let defaults: UserDefaults
 
-    // Versioned storage key. Bump this and add a migration when the persisted shape changes.
     private static let currentVersion = 1
     private static var storageKey: String { "cinescroll.recentSearches.v\(currentVersion)" }
-    // Legacy key written before versioning was added. migrated on first load then deleted.
-    private static let legacyKey = "cinescroll.recentSearches"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
     }
 
     func loadQueries() async -> [String] {
-        // Migrate from the unversioned key written before v1.
-        if let legacy = defaults.stringArray(forKey: Self.legacyKey) {
-            defaults.set(legacy, forKey: Self.storageKey)
-            defaults.removeObject(forKey: Self.legacyKey)
-            return legacy
-        }
         return defaults.stringArray(forKey: Self.storageKey) ?? []
     }
 

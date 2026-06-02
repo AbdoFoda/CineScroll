@@ -37,8 +37,7 @@ final class SearchViewModelTests: XCTestCase {
         let store = InMemoryRecentSearchStore()
         await store.saveQueries(["Batman", "Matrix", "Batman Returns"])
         let vm = SearchViewModel(repository: RecordingSearchRepository(), recentStore: store)
-        // Allow init's Task to load recents
-        try? await Task.sleep(for: .milliseconds(20))
+        await vm.reloadRecentQueriesFromStore()
 
         XCTAssertEqual(vm.matchingRecents(for: "").count, 3)
         XCTAssertEqual(vm.matchingRecents(for: "bat").count, 2)

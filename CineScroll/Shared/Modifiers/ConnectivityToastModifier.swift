@@ -1,19 +1,12 @@
 import SwiftUI
 
 /// Overlays a `NetworkErrorToast` at the bottom of any view, driven entirely by a
-/// `ConnectivityState` instance. Views never need to subscribe to notifications or
-/// hold `isBackOnline` state themselves.
+/// `ConnectivityState` instance.
 ///
-/// Usage:
-/// ```swift
-/// ContentView()
-///     .connectivityToast(state: viewModel.connectivity, onRetry: { viewModel.retry() })
-/// ```
 struct ConnectivityToastModifier: ViewModifier {
     let state: ConnectivityState
     var onRetry: () -> Void
     var bottomPadding: CGFloat
-    /// Set to `false` to suppress the toast entirely (e.g. detail screen with no initial movie).
     var isEnabled: Bool
 
     func body(content: Content) -> some View {

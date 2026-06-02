@@ -5,8 +5,7 @@ struct AppDependencies: Sendable {
     let movieRepository: MovieRepository
     let recentSearchStore: RecentSearchStoring
     let networkMonitor: NetworkMonitor
-    /// Debounce delay for the search field. Set to `.zero` in UITest builds to make
-    /// search results appear synchronously, avoiding flakiness.
+    /// Debounce delay for the search field.
     let searchDebounceDelay: Duration
 
     /// Production wiring using `URLSession`, `UserDefaults`, and live reachability.

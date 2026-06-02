@@ -7,19 +7,15 @@ final class SearchViewModelExtendedTests: XCTestCase {
 
     // MARK: - onAppear reloads recents from store
 
-    func testOnAppearReloadsRecentsFromStore() async throws {
+    func testOnAppearReloadsRecentsFromStore() async {
         let store = InMemoryRecentSearchStore()
         let vm = SearchViewModel(repository: EmptySearchRepository(), recentStore: store, debounceDelay: .zero)
-        // Allow init Task to settle
-        try await Task.sleep(for: .milliseconds(20))
+        XCTAssertTrue(vm.recentQueries.isEmpty)
 
-        // Add query directly to store (bypassing VM)
         await store.saveQueries(["Inception"])
-        XCTAssertTrue(vm.recentQueries.isEmpty, "VM loaded at init. store was empty then")
-
         vm.onAppear()
-        // Allow onAppear Task to settle
-        try await Task.sleep(for: .milliseconds(20))
+        await vm.awaitOnAppearRecentsLoad()
+
         XCTAssertEqual(vm.recentQueries, ["Inception"], "onAppear must reload from store")
     }
 

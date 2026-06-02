@@ -27,6 +27,7 @@ final class SearchViewModel {
 
     private var debounceTask: Task<Void, Never>?
     private var fetchTask: Task<Void, Never>?
+    private var loadRecentsTask: Task<Void, Never>?
     /// Skips one debounced empty query after `runQueryNow` (avoids canceling chip/submit searches).
     private var skipNextEmptyDebounce = false
 
@@ -56,10 +57,20 @@ final class SearchViewModel {
 
     /// Reloads recents from persistence when the UI appears.
     func onAppear() {
-        Task { [weak self] in
-            guard let self else { return }
-            recentQueries = await recentStore.loadQueries()
+        loadRecentsTask?.cancel()
+        loadRecentsTask = Task { [weak self] in
+            await self?.reloadRecentQueriesFromStore()
         }
+    }
+
+    /// Loads persisted recent searches into `recentQueries`.
+    func reloadRecentQueriesFromStore() async {
+        recentQueries = await recentStore.loadQueries()
+    }
+
+    /// Waits for the `Task` started by the most recent `onAppear()`. Used by unit tests (`@testable`).
+    func awaitOnAppearRecentsLoad() async {
+        await loadRecentsTask?.value
     }
 
     /// Cancels background work when the search UI goes away.
@@ -68,6 +79,8 @@ final class SearchViewModel {
         debounceTask = nil
         fetchTask?.cancel()
         fetchTask = nil
+        loadRecentsTask?.cancel()
+        loadRecentsTask = nil
     }
 
     /// TMDB titles for the native autocomplete suggestion list (subset of `results`).

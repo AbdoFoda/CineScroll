@@ -113,7 +113,7 @@ struct AsyncImageView: View {
             }
         } catch {
             if Task.isCancelled { return }
-            // 3. Offline fallback. serve stale URLCache entry if available.
+            // Offline fallback. serve stale URLCache entry if available.
             var cached = URLRequest(url: url, cachePolicy: .returnCacheDataDontLoad)
             cached.httpMethod = "GET"
             if let (data, _) = try? await URLSession.shared.data(for: cached),
